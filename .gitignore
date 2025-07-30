@@ -32,6 +32,7 @@ yarn.lock
 
 # Build outputs
 dist/
+dist-electron/
 build/
 static/js/
 static/css/
