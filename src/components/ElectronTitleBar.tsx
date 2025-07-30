@@ -5,7 +5,7 @@ interface ElectronTitleBarProps {
   title?: string;
 }
 
-export const ElectronTitleBar: React.FC<ElectronTitleBarProps> = ({ title = 'ChatGLM Web' }) => {
+export const ElectronTitleBar: React.FC<ElectronTitleBarProps> = ({ title = 'ChatGLM Desktop' }) => {
   // Prüfen, ob wir in Electron laufen
   const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
@@ -32,7 +32,7 @@ export const ElectronTitleBar: React.FC<ElectronTitleBarProps> = ({ title = 'Cha
   };
 
   return (
-    <div className="electron-titlebar flex items-center justify-between h-10 bg-gray-900/100 backdrop-blur-lg px-4 select-none">
+    <div className="electron-titlebar flex items-center justify-between h-10 bg-gray-900/95 backdrop-blur-lg px-4 select-none border-b border-gray-700/50">
       <div className="titlebar-drag-region flex-1 h-full" style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}>
         <div className="flex items-center h-full">
           <span className="text-sm font-medium ml-2 text-white/90">{title}</span>

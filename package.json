@@ -8,7 +8,8 @@
     "url": "https://github.com/your-username/chatglm-web.git"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run web-search\" \"vite\"",
+    "web-search": "cd web-search-service && npm start",
     "build": "vite build && node fix-html.js",
     "preview": "vite preview",
     "test": "vitest",
@@ -17,7 +18,8 @@
     "test:coverage": "vitest run --coverage",
     "shadcn-ui": "npx shadcn-ui@latest",
     "electron": "electron .",
-    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:dev": "concurrently \"npm run web-search\" \"npm run dev-only\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev-only": "vite",
     "electron:build": "npm run build && electron-builder",
     "electron:build:win": "npm run build && electron-builder --win",
     "electron:build:win:clean": "npm run build && rmdir /s /q dist-electron 2>nul & electron-builder --win",
@@ -57,6 +59,7 @@
     "@tailwindcss/typography": "^0.5.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -85,7 +85,7 @@ async fn hello_handler() -> Html<&'static str> {
     <!DOCTYPE html>
     <html>
     <head>
-        <title>ChatGLM Web</title>
+        <title>ChatGLM Desktop</title>
         <meta charset="utf-8">
     </head>
     <body>

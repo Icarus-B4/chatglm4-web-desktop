@@ -31,12 +31,6 @@ export interface Message {
   toolCalls?: ToolCall[];
   toolCallResults?: ToolCallResult[];
   codeArtifacts?: CodeArtifact[];
-  searchResults?: Array<{
-    type: 'code' | 'documentation';
-    title: string;
-    url: string;
-    description: string;
-  }>;
 }
 
 export interface ChatSession {
@@ -82,7 +76,7 @@ export interface AppSettings {
   mode: GLMMode;
   theme: Theme;
   chatBackgroundTransparency: number; // 0-100
-  windowTransparency: number; // 0-100, nur für Electron-Desktop-App
+  windowTransparency: number; // 50-100, nur für Electron
   fontSize: 'small' | 'medium' | 'large';
   language: 'de' | 'en' | 'zh';
   autoScroll: boolean;
@@ -118,8 +112,6 @@ declare global {
       close: () => Promise<void>;
       getSystemTheme: () => Promise<string>;
       onThemeChange: (callback: (event: any) => void) => void;
-      setWindowOpacity: (opacity: number) => void; // Neue Methode für Fenster-Transparenz
-      isElectron: boolean; // Erkennung, ob wir in Electron laufen
     };
   }
 }

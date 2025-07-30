@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { type SDKMessage } from "@anthropic-ai/claude-code";
 import { useDevServer } from './DevServerManager';
 import { CodeArtifact } from '../types/chat';
 import { extractCodeArtifactsFromClaude } from '../services/claudeCodeService';
 import { Play, Server, ExternalLink } from 'lucide-react';
+
+import { CodePreview } from './CodePreview'; // Importiere die Code-Vorschau
+
+interface SDKMessage {
+  role?: string;
+  content?: string;
+  type?: string;
+  name?: string;
+  input?: any;
+  tool_calls?: any[];
+}
 
 interface ClaudeCodeIntegrationProps {
   messages: SDKMessage[];
@@ -16,6 +26,7 @@ export const ClaudeCodeIntegration: React.FC<ClaudeCodeIntegrationProps> = ({
 }) => {
   const [generatedArtifacts, setGeneratedArtifacts] = useState<CodeArtifact[]>([]);
   const { serverStatus, startServer, stopServer } = useDevServer(generatedArtifacts);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false); // Status für die Vorschau
   
   // Extrahiere Code-Artefakte aus verschiedenen Message-Formaten
   useEffect(() => {
@@ -26,6 +37,12 @@ export const ClaudeCodeIntegration: React.FC<ClaudeCodeIntegrationProps> = ({
     
     console.log('📋 ClaudeCodeIntegration: Extrahierte Artifacts:', extractedArtifacts.length);
     setGeneratedArtifacts(extractedArtifacts);
+
+    // Öffne die Vorschau automatisch wenn neue Artifacts da sind
+    if (extractedArtifacts.length > 0) {
+        setIsPreviewOpen(true);
+    }
+
   }, [messages]);
 
   const handleRunInDaytona = () => {
@@ -157,8 +174,11 @@ export const ClaudeCodeIntegration: React.FC<ClaudeCodeIntegrationProps> = ({
           </div>
         )}
 
-        {/* Original Message Display */}
-        <MessageDisplay messages={messages} />
+        <CodePreview 
+          artifacts={generatedArtifacts}
+          isOpen={isPreviewOpen}
+          onClose={() => setIsPreviewOpen(false)}
+        />
       </div>
     </div>
   );

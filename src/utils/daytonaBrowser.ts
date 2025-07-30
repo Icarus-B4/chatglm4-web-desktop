@@ -7,6 +7,20 @@ interface DaytonaSandbox {
   url?: string;
 }
 
+interface CommandResult {
+  exitCode: number;
+  result: string;
+}
+
+interface FileUploadResult {
+  success: boolean;
+  path: string;
+}
+
+interface PreviewLinkResult {
+  url: string;
+}
+
 class BrowserDaytona {
   private apiKey: string;
   private apiUrl: string;
@@ -61,35 +75,38 @@ class BrowserDaytona {
       const sandbox = await response.json();
       
       // Erweitere mit Browser-kompatiblen Methoden
+      const apiKey = this.apiKey;
+      const apiUrl = this.apiUrl;
+      
       return {
         ...sandbox,
-        async getUserRootDir() {
+        async getUserRootDir(): Promise<string> {
           return '/workspace';
         },
         process: {
-          async executeCommand(command: string, cwd?: string) {
+          async executeCommand(command: string, cwd?: string): Promise<CommandResult> {
             console.log(`Executing: ${command} in ${cwd || '/'}`);
             
             // Simuliere Command-Execution via API
-            const response = await fetch(`${this.apiUrl}/sandboxes/${sandbox.id}/exec`, {
+            const execResponse = await fetch(`${apiUrl}/sandboxes/${sandbox.id}/exec`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${this.apiKey}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({ command, cwd })
             });
             
-            if (!response.ok) {
-              return { exitCode: 1, result: `Command failed: ${response.statusText}` };
+            if (!execResponse.ok) {
+              return { exitCode: 1, result: `Command failed: ${execResponse.statusText}` };
             }
             
-            const result = await response.json();
+            const result = await execResponse.json();
             return { exitCode: 0, result: result.output || 'Command executed' };
           }
         },
         fs: {
-          async uploadFile(buffer: Buffer, path: string) {
+          async uploadFile(buffer: Buffer, path: string): Promise<FileUploadResult> {
             console.log(`Uploading file: ${path}`);
             
             // Konvertiere Buffer zu FormData für Browser
@@ -98,33 +115,33 @@ class BrowserDaytona {
             formData.append('file', blob, path.split('/').pop() || 'file');
             formData.append('path', path);
             
-            const response = await fetch(`${this.apiUrl}/sandboxes/${sandbox.id}/files`, {
+            const uploadResponse = await fetch(`${apiUrl}/sandboxes/${sandbox.id}/files`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${this.apiKey}`
+                'Authorization': `Bearer ${apiKey}`
               },
               body: formData
             });
             
-            if (!response.ok) {
-              throw new Error(`File upload failed: ${response.statusText}`);
+            if (!uploadResponse.ok) {
+              throw new Error(`File upload failed: ${uploadResponse.statusText}`);
             }
             
-            return await response.json();
+            return await uploadResponse.json();
           }
         },
-        async getPreviewLink(port: number) {
-          const response = await fetch(`${this.apiUrl}/sandboxes/${sandbox.id}/preview?port=${port}`, {
+        async getPreviewLink(port: number): Promise<PreviewLinkResult> {
+          const previewResponse = await fetch(`${apiUrl}/sandboxes/${sandbox.id}/preview?port=${port}`, {
             headers: {
-              'Authorization': `Bearer ${this.apiKey}`
+              'Authorization': `Bearer ${apiKey}`
             }
           });
           
-          if (!response.ok) {
-            throw new Error(`Preview link failed: ${response.statusText}`);
+          if (!previewResponse.ok) {
+            throw new Error(`Preview link failed: ${previewResponse.statusText}`);
           }
           
-          return await response.json();
+          return await previewResponse.json();
         }
       };
     } catch (error) {
@@ -133,7 +150,7 @@ class BrowserDaytona {
     }
   }
   
-  async delete(sandbox: { id: string }) {
+  async delete(sandbox: { id: string }): Promise<boolean> {
     try {
       const response = await fetch(`${this.apiUrl}/sandboxes/${sandbox.id}`, {
         method: 'DELETE',
@@ -157,6 +174,6 @@ class BrowserDaytona {
 export { BrowserDaytona };
 
 // Erstelle globale Instanz
-export function createBrowserDaytona(config: { apiKey: string; apiUrl: string }) {
+export function createBrowserDaytona(config: { apiKey: string; apiUrl: string }): BrowserDaytona {
   return new BrowserDaytona(config);
 }

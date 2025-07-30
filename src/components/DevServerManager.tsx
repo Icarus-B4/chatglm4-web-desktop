@@ -235,3 +235,82 @@ async function createLocalSimulation(): Promise<any> {
   await new Promise(resolve => setTimeout(resolve, 500));
   return simulatedSandbox;
 }
+    if (serverStatus.mode === 'daytona_cloud' && daytona) {
+        try {
+            addLog(`Entferne Daytona Sandbox ${serverStatus.sandbox.id}...`);
+            await daytona.delete(serverStatus.sandbox);
+            addLog('✅ Sandbox erfolgreich entfernt.');
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+            addLog(`❌ Fehler beim Stoppen des Servers: ${errorMessage}`);
+            // Trotz Fehler den Status zurücksetzen
+        }
+    }
+    
+    setServerStatus({ 
+        status: 'stopped', 
+        port: null, 
+        url: null, 
+        error: null, 
+        logs: [], 
+        sandbox: null,
+        mode: serverStatus.mode 
+    });
+
+  }, [daytona, serverStatus.sandbox, serverStatus.mode, addLog]);
+
+  const restartServer = useCallback(async () => {
+      await stopServer();
+      // Kurze Pause, um sauberen Neustart zu gewährleisten
+      setTimeout(() => {
+        startServer();
+      }, 500);
+  }, [stopServer, startServer]);
+  
+  return { serverStatus, setMode, startServer, stopServer, restartServer };
+};
+
+// Lokale Simulation für Fallback
+async function createLocalSimulation(): Promise<any> {
+  const simulatedSandbox = {
+    id: `local-sim-${Date.now()}`,
+    async getUserRootDir() {
+      return '/workspace';
+    },
+    process: {
+      async executeCommand(command: string, cwd?: string) {
+        console.log(`[SIM] Exec: ${command} in ${cwd || '/'}`);
+        return { exitCode: 0, result: `Simulated: ${command}` };
+      }
+    },
+    fs: {
+      async uploadFile(buffer: Buffer, path: string) {
+        console.log(`[SIM] Upload: ${path} (${buffer.length} bytes)`);
+        return Promise.resolve();
+      }
+    },
+    async getPreviewLink(port: number) {
+        const url = `http://localhost:${port}`;
+        console.log(`[SIM] Preview URL: ${url}`);
+        // Erstelle eine Dummy-HTML-Seite, um die Vorschau zu simulieren
+        const previewHtml = `
+          <html>
+            <head><title>Simulierte Vorschau</title></head>
+            <body>
+              <h1>Lokale Simulation</h1>
+              <p>Dies ist eine simulierte Vorschau. Die generierte Anwendung läuft auf Port ${port}.</p>
+              <p>Öffnen Sie Ihre Browser-Konsole für weitere Details.</p>
+            </body>
+          </html>
+        `;
+        const blob = new Blob([previewHtml], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Dies ist ein Trick, um eine "echte" URL zu haben, aber sie zeigt nur auf die Info-Seite.
+        // Die eigentliche App muss manuell unter localhost:3000 geöffnet werden.
+        return { url: blobUrl };
+    }
+  };
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return simulatedSandbox;
+}

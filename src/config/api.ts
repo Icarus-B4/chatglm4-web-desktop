@@ -13,7 +13,7 @@ export const API_CONFIG = {
   TEMPERATURE: 0.7,
   
   // Timeout
-  TIMEOUT: 30000, // 30 Sekunden
+  TIMEOUT: 60000, // 60 Sekunden
   
   // Demo-Modus (falls API nicht verfügbar)
   USE_DEMO_MODE: false, // Setze auf false für echte API

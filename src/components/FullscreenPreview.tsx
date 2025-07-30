@@ -60,11 +60,327 @@ export const FullscreenPreview: React.FC<FullscreenPreviewProps> = ({ artifacts,
       }
     } else if (artifact.type === 'js') {
       try {
-        console.log('JavaScript-Code ausführen:', artifact.content);
-        alert('JavaScript-Code-Ausführung wird in einer zukünftigen Version unterstützt.');
-      } catch (error) {
-        console.error('Fehler beim Ausführen des JavaScript-Codes:', error);
-      }
+        // Erstelle eine sichere Umgebung für JavaScript-Ausführung
+        const sandboxWindow = window.open('', '_blank', 'width=800,height=600');
+        if (sandboxWindow) {
+          // Erstelle eine HTML-Seite mit dem JavaScript-Code
+          const htmlContent = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Ausführung - ${artifact.filename}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #007acc;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            min-height: 100px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .console-log {
+            background: #e2e3e5;
+            border-color: #d6d8db;
+            color: #383d41;
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .console-error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .console-warn {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        .console-info {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 JavaScript Ausführung</h1>
+            <p>Datei: ${artifact.filename}</p>
+        </div>
+        
+        <div class="controls">
+            <button onclick="runCode()">▶️ Code ausführen</button>
+            <button onclick="clearOutput()">🗑️ Ausgabe löschen</button>
+            <button onclick="showCode()">📄 Code anzeigen</button>
+        </div>
+        
+        <div id="output" class="output">
+            Klicke auf "Code ausführen" um den JavaScript-Code zu starten...
+        </div>
+        
+        <div id="codeDisplay" style="display: none;">
+            <h3>📄 JavaScript Code:</h3>
+            <pre style="background: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto;">${artifact.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+        </div>
+    </div>
+
+    <script>
+        // Console-Override für bessere Ausgabe
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+        
+        const outputDiv = document.getElementById('output');
+        
+        function addToOutput(message, type = 'log') {
+            const div = document.createElement('div');
+            div.className = 'console-' + type;
+            div.textContent = typeof message === 'object' ? JSON.stringify(message, null, 2) : message;
+            outputDiv.appendChild(div);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+        
+        // Override console methods
+        console.log = (...args) => {
+            originalConsole.log(...args);
+            args.forEach(arg => addToOutput(arg, 'log'));
+        };
+        
+        console.error = (...args) => {
+            originalConsole.error(...args);
+            args.forEach(arg => addToOutput(arg, 'error'));
+        };
+        
+        console.warn = (...args) => {
+            originalConsole.warn(...args);
+            args.forEach(arg => addToOutput(arg, 'warn'));
+        };
+        
+        console.info = (...args) => {
+            originalConsole.info(...args);
+            args.forEach(arg => addToOutput(arg, 'info'));
+        };
+        
+        function runCode() {
+            try {
+                outputDiv.innerHTML = '<div class="console-info">🚀 Starte JavaScript-Ausführung...</div>';
+                
+                // Führe den Code aus
+                const result = eval(\`${artifact.content.replace(/`/g, '\\`')}\`);
+                
+                if (result !== undefined) {
+                    addToOutput('✅ Rückgabewert: ' + result, 'success');
+                }
+                
+                addToOutput('✅ Code erfolgreich ausgeführt!', 'success');
+                
+            } catch (error) {
+                addToOutput('❌ Fehler: ' + error.message, 'error');
+                console.error('JavaScript-Ausführungsfehler:', error);
+            }
+        }
+        
+        function clearOutput() {
+            outputDiv.innerHTML = '<div class="console-info">Ausgabe gelöscht. Klicke auf "Code ausführen" um den JavaScript-Code zu starten...</div>';
+        }
+        
+        function showCode() {
+            const codeDisplay = document.getElementById('codeDisplay');
+            if (codeDisplay.style.display === 'none') {
+                codeDisplay.style.display = 'block';
+            } else {
+                codeDisplay.style.display = 'none';
+            }
+        }
+        
+        // Automatisch ausführen wenn gewünscht
+        // runCode();
+    </script>
+</body>
+</html>`;
+          
+          sandboxWindow.document.write(htmlContent);
+          sandboxWindow.document.close();
+          console.log('JavaScript-Code in neuem Tab geöffnet');
+        } else {
+          alert('Popup-Blocker verhindert das Öffnen des neuen Tabs. Bitte erlaube Popups für diese Seite.');
+        }
+              } catch (error) {
+          console.error('Fehler beim Ausführen des JavaScript-Codes:', error);
+          alert('Fehler beim Ausführen des JavaScript-Codes: ' + (error instanceof Error ? error.message : String(error)));
+        }
+    } else if (artifact.type === 'css') {
+      try {
+        // Erstelle eine HTML-Seite mit dem CSS-Code
+        const htmlContent = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Preview - ${artifact.filename}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: #007acc;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .preview-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 200px;
+            background: white;
+        }
+        .code-display {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 CSS Preview</h1>
+            <p>Datei: ${artifact.filename}</p>
+        </div>
+        
+        <button onclick="toggleCode()">📄 Code anzeigen/verbergen</button>
+        
+        <div id="codeDisplay" class="code-display" style="display: none;">
+            <h3>CSS Code:</h3>
+            <pre>${artifact.content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+        </div>
+        
+        <div class="preview-area" id="previewArea">
+            <h2>CSS Preview Bereich</h2>
+            <p>Hier wird dein CSS angewendet. Füge HTML-Elemente hinzu um die Styles zu testen.</p>
+            <div class="demo-element">
+                <h3>Demo Element</h3>
+                <p>Dies ist ein Beispiel-Element um deine CSS-Styles zu testen.</p>
+                <button>Demo Button</button>
+            </div>
+        </div>
+    </div>
+
+    <style id="dynamicCSS">
+        ${artifact.content}
+    </style>
+
+    <script>
+        function toggleCode() {
+            const codeDisplay = document.getElementById('codeDisplay');
+            if (codeDisplay.style.display === 'none') {
+                codeDisplay.style.display = 'block';
+            } else {
+                codeDisplay.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>`;
+        
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+          newWindow.document.write(htmlContent);
+          newWindow.document.close();
+          console.log('CSS-Code in neuem Tab geöffnet');
+        } else {
+          alert('Popup-Blocker verhindert das Öffnen des neuen Tabs. Bitte erlaube Popups für diese Seite.');
+        }
+             } catch (error) {
+         console.error('Fehler beim Öffnen des CSS-Codes:', error);
+         alert('Fehler beim Öffnen des CSS-Codes: ' + (error instanceof Error ? error.message : String(error)));
+       }
     }
   };
 

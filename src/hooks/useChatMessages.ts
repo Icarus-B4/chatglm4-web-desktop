@@ -6,64 +6,6 @@ import { API_CONFIG } from '../config/api';
 export const useChatMessages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [thinking, setThinking] = useState<string>('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-
-  // Funktion zum Durchsuchen von lokalen Code-Beispielen und Dokumentation
-  const searchCodeAndDocs = async (query: string) => {
-    try {
-      // Lokale/sichere Dokumentationssuche ohne externe APIs
-      const localResults = [
-        {
-          type: 'documentation',
-          title: 'HTML Grundlagen',
-          url: 'https://developer.mozilla.org/de/docs/Web/HTML',
-          description: 'Vollständiger HTML-Leitfaden für moderne Webentwicklung'
-        },
-        {
-          type: 'documentation', 
-          title: 'CSS Layout Guide',
-          url: 'https://developer.mozilla.org/de/docs/Web/CSS',
-          description: 'CSS-Techniken für responsive Designs'
-        },
-        {
-          type: 'documentation',
-          title: 'JavaScript Referenz',
-          url: 'https://developer.mozilla.org/de/docs/Web/JavaScript',
-          description: 'Moderne JavaScript-Features und Best Practices'
-        },
-        {
-          type: 'documentation',
-          title: 'React Documentation',
-          url: 'https://react.dev/',
-          description: 'Offizielle React-Dokumentation für moderne App-Entwicklung'
-        },
-        {
-          type: 'documentation',
-          title: 'Next.js Guide',
-          url: 'https://nextjs.org/docs',
-          description: 'Full-Stack React Framework für Produktionsanwendungen'
-        }
-      ];
-
-      // Filter basierend auf Query
-      const filteredResults = localResults.filter(result => 
-        result.title.toLowerCase().includes(query.toLowerCase()) ||
-        result.description.toLowerCase().includes(query.toLowerCase()) ||
-        query.toLowerCase().includes('html') && result.title.includes('HTML') ||
-        query.toLowerCase().includes('css') && result.title.includes('CSS') ||
-        query.toLowerCase().includes('javascript') && result.title.includes('JavaScript') ||
-        query.toLowerCase().includes('react') && result.title.includes('React') ||
-        query.toLowerCase().includes('next') && result.title.includes('Next.js')
-      );
-
-      setSearchResults(filteredResults.length > 0 ? filteredResults : localResults.slice(0, 3));
-      return searchResults;
-    } catch (error) {
-      console.error('Fehler bei der lokalen Suche:', error);
-      return [];
-    }
-  };
 
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
@@ -77,88 +19,50 @@ export const useChatMessages = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-    setThinking('Analysiere Anfrage...');
 
     try {
-      // Suche nach relevanten Code-Beispielen und Dokumentation
-      setThinking('Suche nach relevanten Code-Beispielen und Dokumentation...');
-      const searchResults = await searchCodeAndDocs(content);
-      
-      // Prüfe ob es sich um eine Code-Anfrage handelt
-      const isCodeRequest = content.toLowerCase().includes('erstelle') ||
-                           content.toLowerCase().includes('entwickle') ||
-                           content.toLowerCase().includes('baue') ||
-                           content.toLowerCase().includes('programmiere') ||
-                           content.toLowerCase().includes('code') ||
-                           content.toLowerCase().includes('app') ||
-                           content.toLowerCase().includes('website') ||
-                           content.toLowerCase().includes('webseite') ||
-                           content.toLowerCase().includes('komponente') ||
-                           content.toLowerCase().includes('funktion') ||
-                           content.toLowerCase().includes('projekt') ||
-                           content.toLowerCase().includes('html') ||
-                           content.toLowerCase().includes('css') ||
-                           content.toLowerCase().includes('javascript') ||
-                           content.toLowerCase().includes('react') ||
-                           content.toLowerCase().includes('next.js') ||
-                           content.toLowerCase().includes('vue') ||
-                           content.toLowerCase().includes('angular');
-
-      if (isCodeRequest) {
-        setThinking('Starte intelligente Code-Generierung mit Z.AI...');
-        console.log('Verwende Z.AI API für prompt-basierte Code-Generierung...');
+      // Claude Code Integration - Für komplexe Code-Generierung
+      if (content.toLowerCase().includes('claude') || 
+          content.toLowerCase().includes('erstelle') ||
+          content.toLowerCase().includes('entwickle') ||
+          content.toLowerCase().includes('baue') ||
+          content.toLowerCase().includes('programmiere')) {
+        
+        console.log('Claude Code Simulation wird verwendet für erweiterte Code-Generierung...');
         
         const claudeResult = await generateCodeWithClaude(content);
         
         if (claudeResult.success) {
-          setThinking('Extrahiere und verarbeite generierte Code-Artefakte...');
-          console.log('📝 useChatMessages: Verarbeite Claude-Ergebnis mit', claudeResult.messages.length, 'Messages');
-          const codeArtifacts = extractCodeArtifactsFromClaude(claudeResult.messages as any[]);
-          const message = claudeResult.messages[0];
-          console.log('📊 useChatMessages: Extrahierte', codeArtifacts.length, 'Artifacts');
+          const codeArtifacts = extractCodeArtifactsFromClaude(claudeResult.messages);
           
-          setThinking('Erstelle Antwort mit generierten Artefakten...');
           const assistantMessage: Message = {
             id: crypto.randomUUID(),
-            content: codeArtifacts.length > 0 ? 
-              `🚀 **Code-Generierung abgeschlossen!**
+            content: `🤖 **Claude Code Generierung abgeschlossen!**
 
-Ich habe basierend auf deinem Prompt \"${content}\" ein vollständiges Projekt erstellt:
+Ich habe dein Projekt mit Claude Code SDK erstellt. Das System hat ${claudeResult.messages.length} Nachrichten verarbeitet und ${codeArtifacts.length} Code-Artefakte generiert.
 
-✨ **Generierte Dateien (${codeArtifacts.length}):**
-${codeArtifacts.map((artifact, i) => `${i + 1}. **${artifact.filename}** (${artifact.language})`).join('\\n')}
+✨ **Generierte Dateien:**
+${codeArtifacts.map((artifact, i) => `${i + 1}. **${artifact.filename}** (${artifact.language})`).join('\n')}
 
-🔍 **Zusätzliche Ressourcen:**
-${searchResults.slice(0, 3).map(result => `- [${result.title}](${result.url})`).join('\\n')}
+🚀 **Klicke auf "In isolierter Umgebung öffnen"** um das Projekt live zu testen!
 
-🎯 **Klicke auf \"In isolierter Umgebung öffnen\"** um das Projekt live zu testen!
-
-**Intelligente Features:**
-- Prompt-basierte Code-Generierung
-- Automatische Projektstruktur
-- Moderne Best Practices
-- Vollständige Dependencies` : 
-              `💬 **Antwort generiert:**
-
-${message?.content || 'Hier ist meine Antwort auf deine Anfrage.'}
-
-🔍 **Relevante Ressourcen:**
-${searchResults.slice(0, 3).map(result => `- [${result.title}](${result.url})`).join('\\n')}`,
+**Claude Code Features verwendet:**
+- Automatische Projektstruktur-Erstellung
+- Intelligente Abhängigkeits-Verwaltung  
+- Best-Practice Code-Generierung
+- Cross-Platform Kompatibilität`,
             role: 'assistant',
             timestamp: new Date(),
-            thinking: `Z.AI hat erfolgreich auf den Prompt \"${content}\" reagiert. ${codeArtifacts.length} Code-Artefakte wurden generiert.`,
-            codeArtifacts: codeArtifacts,
-            searchResults: searchResults
+            thinking: `Claude Code SDK hat erfolgreich ein Projekt basierend auf dem Prompt "${content}" erstellt. ${claudeResult.messages.length} Nachrichten wurden verarbeitet.`,
+            codeArtifacts: codeArtifacts
           };
           
           setMessages(prev => [...prev, assistantMessage]);
           setIsLoading(false);
-          setThinking('');
           return;
         } else {
-          console.error(`Z.AI Code-Generierung Fehler: ${claudeResult.error}`);
-          setThinking('Fehler bei der Code-Generierung, verwende Fallback...');
-          // Fallthrough zur Standard-API
+          console.error(`Claude Code Fehler: ${claudeResult.error}`);
+          // Fallback zur Demo-Version
         }
       }
 
@@ -558,7 +462,6 @@ Ich habe eine vollständige, moderne Landing Page mit Bild-Upload-Funktionalitä
         
         setMessages(prev => [...prev, assistantMessage]);
         setIsLoading(false);
-        setThinking('');
         return;
       }
 
@@ -568,7 +471,7 @@ Ich habe eine vollständige, moderne Landing Page mit Bild-Upload-Funktionalitä
       
       // Timeout-Controller für API-Calls
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 Sekunden Timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 Sekunden Timeout
       
       const response = await fetch(`${API_CONFIG.BASE_URL}/chat/completions`, {
         method: 'POST',
@@ -585,19 +488,13 @@ Ich habe eine vollständige, moderne Landing Page mit Bild-Upload-Funktionalitä
               content: `Du bist ein Experte für Webentwicklung und Programmierung. Wenn der User nach Code, Webseiten, Apps oder Projekten fragt, erstelle immer vollständige, funktionsfähige Code-Artefakte.
 
 Wichtige Regeln:
-- Für einfache Webseiten/HTML: Erstelle eine EINZELNE HTML-Datei mit inline CSS und JavaScript im <style> und <script> Tag - KEINE externen Dateien!
-- Für komplexe Projekte (React/Next.js/Node.js): Erstelle separate Dateien und eine package.json mit allen Dependencies
+- Erstelle IMMER eine package.json für Node.js/React/Next.js Projekte
 - Füge alle notwendigen Dependencies hinzu
-- Erstelle vollständige Dateien, nicht nur Snippets
+- Erstelle vollständige Dateien, nicht nur Snippets  
+- Für Webseiten: HTML, CSS, JS separat oder als vollständige HTML-Datei
+- Für React/Next.js: Komponenten, Konfigurationsdateien, etc.
 - Nutze moderne Standards und Best Practices
 - Deutsche Kommentare und Texte
-- Für Games/Spiele: Immer als vollständige HTML-Datei mit inline CSS/JS
-- Für Landing Pages: Als HTML mit inline Styles oder als React/Next.js Projekt
-
-BESONDERS WICHTIG für Webseiten:
-- Snake Game, Tic-Tac-Toe, Calculator, etc. → EINE HTML-Datei mit allem inline
-- Einfache Landing Pages → EINE HTML-Datei mit inline CSS/JS
-- Nur bei expliziter Anfrage nach React/Next.js/Vue → separate Dateien
 
 Verwende das create_code_artifact Tool für jede Datei. Erstelle immer vollständige, funktionsfähige Dateien.
 
@@ -702,8 +599,42 @@ WICHTIG: Nutze NUR das create_code_artifact Tool - andere Tools können ignorier
               arguments: toolCall.function.arguments
             }
           })) || [],
-          // Code-Artifacts mit zentralisierter Extraktionsfunktion
-          codeArtifacts: extractCodeArtifactsFromClaude([data.choices[0].message])
+          // Code-Artifacts aus Tool-Calls extrahieren
+          codeArtifacts: data.choices[0].message.tool_calls?.map((toolCall: any) => {
+            if (toolCall.function.name === 'create_code_artifact') {
+              try {
+              const args = JSON.parse(toolCall.function.arguments);
+                
+                // Validiere notwendige Felder
+                if (!args.content || !args.filename) {
+                  console.warn('Unvollständiger Code-Artifact:', args);
+                  return null;
+                }
+                
+                // Erweiterte Zuordnung von Sprachen zu Typen
+                let artifactType: 'html' | 'css' | 'js' | 'canvas' = 'js';
+                const lang = (args.language || 'js').toLowerCase();
+                
+                if (['html', 'htm'].includes(lang)) artifactType = 'html';
+                else if (['css', 'scss', 'sass', 'less'].includes(lang)) artifactType = 'css';
+                else if (['js', 'jsx', 'ts', 'tsx', 'javascript', 'typescript'].includes(lang)) artifactType = 'js';
+                else if (lang === 'canvas') artifactType = 'canvas';
+                else artifactType = 'js'; // Default für JSON, MD, etc.
+                
+              return {
+                id: crypto.randomUUID(),
+                  type: artifactType,
+                content: args.content,
+                filename: args.filename,
+                  language: args.language || 'js'
+              } as CodeArtifact;
+              } catch (parseError) {
+                console.error('Fehler beim Parsen der Tool-Arguments:', parseError);
+                return null;
+              }
+            }
+            return null;
+          }).filter(Boolean) || []
         };
         
         setMessages(prev => [...prev, assistantMessage]);
@@ -712,7 +643,6 @@ WICHTIG: Nutze NUR das create_code_artifact Tool - andere Tools können ignorier
       }
     } catch (error) {
       console.error('ChatGLM API Fehler:', error);
-      setThinking('Fehler aufgetreten, erstelle Fehlermeldung...');
       
       let errorMessage = 'Unbekannter Fehler';
       
@@ -747,20 +677,16 @@ ${errorMessage}
       setMessages(prev => [...prev, assistantMessage]);
     } finally {
       setIsLoading(false);
-      setThinking('');
     }
   }, []);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
-    setSearchResults([]);
   }, []);
 
   return {
     messages,
     isLoading,
-    thinking,
-    searchResults,
     sendMessage,
     clearMessages,
   };

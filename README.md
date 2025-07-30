@@ -1,269 +1,146 @@
-# GLM-4.5 API Client (Rust)
+# ChatGLM Web - GLM-4.5 API Client
 
-Ein modularer Rust-Client für die GLM-4.5 API von Z.AI mit Unterstützung für verschiedene Modellvarianten und Streaming-Antworten.
+Ein moderner Web-Client für die GLM-4.5 API mit Electron-Unterstützung, Code-Generierung und Web-Search-Funktionalität.
 
-## Features
+## 🚀 Features
 
-- ✅ **Modular aufgebaut**: Separate Module für Typen, Client, Fehlerbehandlung und Streaming
-- ✅ **Sichere Token-Verwaltung**: API-Token wird aus .env Datei geladen
-- ✅ **Verschiedene GLM-4.5 Modelle**: `glm-4.5`, `glm-4.5-32k`, `glm-4.5-turbo`
-- ✅ **Streaming-Unterstützung**: Echtzeitverarbeitung von API-Antworten
-- ✅ **Thinking-Feature**: Unterstützung für GLM-4.5's Denkprozess-Feature
-- ✅ **Konfigurierbar**: Alle Parameter über Umgebungsvariablen oder Code konfigurierbar
-- ✅ **Robuste Fehlerbehandlung**: Umfassende Fehlertypen mit Retry-Mechanismus
-- ✅ **Async/Await**: Vollständig asynchrone Implementierung
-- ✅ **Windows-kompatibel**: Getestet auf Windows mit Rust 1.88.0
+- **GLM-4.5 API Integration**: Vollständige Unterstützung für die Z.AI GLM-4.5 API
+- **Code-Generierung**: Automatische Erstellung von Code-Artefakten mit Claude Code
+- **Web-Search**: Integrierte Web-Suche über DuckDuckGo
+- **Electron App**: Desktop-Anwendung mit transparenten Fenstern
+- **Real-time Chat**: Echtzeit-Chat mit Denkprozess-Simulation
+- **Code-Preview**: Live-Vorschau von generiertem Code
+- **ZIP-Download**: Export von Projekten als ZIP-Dateien
+- **Dark/Light Theme**: Automatische Theme-Erkennung
 
-## Installation
+## 🔧 Installation
 
-1. **Voraussetzungen**:
-   - Rust 1.82+ (empfohlen: neueste stabile Version)
-   - Z.AI API-Schlüssel
+### Voraussetzungen
+- Node.js 18+ 
+- pnpm (empfohlen) oder npm
+- Git
 
-2. **Repository klonen**:
-   ```bash
-   git clone <repository-url>
-   cd chatglm-web
-   ```
-
-3. **Abhängigkeiten installieren**:
-   ```bash
-   cargo build
-   ```
-
-## Konfiguration
-
-Erstelle eine `.env` Datei im Projektverzeichnis:
-
-```env
-# GLM-4.5 API Konfiguration
-GLM_API_KEY=your-z-ai-api-key-here
-GLM_API_URL=https://api.z.ai/v1
-GLM_MODEL=glm-4.5
-GLM_MAX_TOKENS=4096
-GLM_TEMPERATURE=0.7
-GLM_TOP_P=0.9
-GLM_STREAM=false
-GLM_THINKING_ENABLED=true
-
-# Server Konfiguration (für Web-Server)
-SERVER_HOST=127.0.0.1
-SERVER_PORT=3000
-```
-
-## Verwendung
-
-### Basis-Client-Beispiel
-
-```rust
-use chatglm_web::client::{GlmClient, GlmConfig, Message};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Konfiguration aus Umgebungsvariablen laden
-    let config = GlmConfig::from_env()?;
-    
-    // Client erstellen
-    let client = GlmClient::new(config)?;
-    
-    // Nachrichten definieren
-    let messages = vec![
-        Message::system("Du bist ein hilfsreicher AI-Assistent."),
-        Message::user("Erkläre mir Quantencomputing in einfachen Worten."),
-    ];
-    
-    // API-Aufruf ausführen
-    let response = client.chat_completions(messages).await?;
-    
-    // Antwort verarbeiten
-    if let Some(choice) = response.choices.first() {
-        println!("Antwort: {}", choice.message.content);
-    }
-    
-    Ok(())
-}
-```
-
-### Streaming-Beispiel
-
-```rust
-use chatglm_web::client::{GlmClient, GlmConfig, Message};
-use futures::StreamExt;
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = GlmConfig::from_env()?.with_stream(true);
-    let client = GlmClient::new(config)?;
-    
-    let messages = vec![
-        Message::user("Schreibe eine kurze Geschichte über Roboter."),
-    ];
-    
-    let mut stream = client.chat_completions_stream(messages).await?;
-    
-    while let Some(chunk_result) = stream.next().await {
-        let chunk = chunk_result?;
-        
-        if let Some(choice) = chunk.choices.first() {
-            if let Some(content) = &choice.delta.content {
-                print!("{}", content);
-            }
-            
-            if choice.finish_reason.is_some() {
-                break;
-            }
-        }
-    }
-    
-    Ok(())
-}
-```
-
-### Verschiedene Modelle verwenden
-
-```rust
-use chatglm_web::client::{GlmClient, GlmConfig, GlmModel};
-
-// Für längere Kontexte
-let config = GlmConfig::from_env()?.with_model(GlmModel::Glm4532K);
-
-// Für schnellere Antworten
-let config = GlmConfig::from_env()?.with_model(GlmModel::Glm45Turbo);
-```
-
-## Test ausführen
-
+### Setup
 ```bash
-# Test-Client ausführen (erfordert gültigen API-Schlüssel in .env)
-cargo run --bin test_client
+# Repository klonen
+git clone <repository-url>
+cd chatglm-web
 
-# Web-Server starten
-cargo run
+# Dependencies installieren
+pnpm install
 
-# Tests ausführen
-cargo test
+# API-Key konfigurieren
+# Erstelle eine .env Datei im Root-Verzeichnis:
+echo "VITE_GLM_API_KEY=dein_api_key_hier" > .env
 ```
 
-## API-Module
+## 🚀 Entwicklung
 
-### `client::types`
-- `GlmModel`: Verfügbare Modellvarianten
-- `Message`: Chat-Nachrichten mit Rollen (System, User, Assistant)
-- `ChatCompletionRequest/Response`: API-Request und Response-Strukturen
-- `GlmConfig`: Client-Konfiguration
-
-### `client::client`
-- `GlmClient`: Haupt-API-Client
-- `chat_completions()`: Synchrone API-Aufrufe
-- `chat_completions_stream()`: Streaming-API-Aufrufe
-
-### `client::error`
-- `GlmError`: Umfassende Fehlertypen
-- Retry-Logik für wiederholbare Fehler
-- HTTP-Status-Code-Behandlung
-
-### `client::streaming`
-- `StreamingResponse`: Wrapper für Streaming-Antworten
-- Server-Sent Events (SSE) Parsing
-- Chunk-Aggregation und Callback-Verarbeitung
-
-## Verfügbare GLM-4.5 Modelle
-
-| Modell | Beschreibung | Kontext-Limit |
-|--------|-------------|---------------|
-| `glm-4.5` | Standard-Modell | ~128K Tokens |
-| `glm-4.5-32k` | Erweiterte Kontextlänge | ~32K Tokens |
-| `glm-4.5-turbo` | Optimiert für Geschwindigkeit | ~128K Tokens |
-
-## Fehlerbehandlung
-
-Der Client bietet umfassende Fehlerbehandlung:
-
-```rust
-match client.chat_completions(messages).await {
-    Ok(response) => {
-        // Erfolgreiche Antwort verarbeiten
-    }
-    Err(GlmError::AuthenticationError) => {
-        println!("Überprüfe deinen API-Schlüssel");
-    }
-    Err(GlmError::RateLimitError { message }) => {
-        println!("Rate Limit erreicht: {}", message);
-        // Automatisches Retry nach delay_time möglich
-    }
-    Err(e) if e.is_retryable() => {
-        if let Some(delay) = e.retry_delay() {
-            tokio::time::sleep(delay).await;
-            // Retry-Logik implementieren
-        }
-    }
-    Err(e) => {
-        println!("Fehler: {}", e);
-    }
-}
-```
-
-## Konfigurationsoptionen
-
-| Variable | Beschreibung | Standard |
-|----------|-------------|----------|
-| `GLM_API_KEY` | Z.AI API-Schlüssel | *erforderlich* |
-| `GLM_API_URL` | API Base URL | `https://api.z.ai/v1` |
-| `GLM_MODEL` | Zu verwendendes Modell | `glm-4.5` |
-| `GLM_MAX_TOKENS` | Maximale Token-Anzahl | `4096` |
-| `GLM_TEMPERATURE` | Kreativitäts-Parameter | `0.7` |
-| `GLM_TOP_P` | Nucleus Sampling | `0.9` |
-| `GLM_STREAM` | Streaming aktivieren | `false` |
-| `GLM_THINKING_ENABLED` | Thinking-Feature | `true` |
-
-## Beispiel-Projektstruktur
-
-```
-src/
-├── client/
-│   ├── mod.rs          # Modul-Exports
-│   ├── types.rs        # API-Typen und Strukturen
-│   ├── client.rs       # Haupt-Client-Implementierung
-│   ├── error.rs        # Fehlerbehandlung
-│   └── streaming.rs    # Streaming-Funktionalität
-├── config/
-│   └── mod.rs          # Konfiguration (für Web-Server)
-├── bin/
-│   └── test_client.rs  # Test-Anwendung
-├── lib.rs              # Library-Root
-└── main.rs             # Web-Server (Axum)
-```
-
-## Entwicklung
-
-### Kompilierung prüfen
+### Development-Server starten
 ```bash
-cargo check
+pnpm dev
 ```
 
-### Build (Release)
+Die Anwendung läuft dann auf:
+- Frontend: http://localhost:3002 (oder nächster verfügbarer Port)
+- Web-Search Service: http://localhost:3004
+
+### Electron-App starten
 ```bash
-cargo build --release
+pnpm electron:dev
 ```
 
-### Code-Formatierung
+## 📦 Build
+
+### Frontend Build
 ```bash
-cargo fmt
+pnpm build
 ```
 
-### Linting
+### Electron Build
 ```bash
-cargo clippy
+pnpm electron:build
 ```
 
-## Lizenz
+## ⚙️ Konfiguration
 
-[Hier Lizenz einfügen]
+### API-Konfiguration
+Die API-Konfiguration befindet sich in `src/config/api.ts`:
 
-## Mitwirkende
+```typescript
+export const API_CONFIG = {
+  API_KEY: 'dein_api_key_hier',
+  BASE_URL: 'https://api.z.ai/api/paas/v4',
+  MODEL: 'glm-4.5',
+  MAX_TOKENS: 4096,
+  TEMPERATURE: 0.7,
+  TIMEOUT: 60000, // 60 Sekunden
+};
+```
 
-[Hier Mitwirkende auflisten]
+### Web-Search Service
+Der Web-Search Service läuft standardmäßig auf Port 3004. Die URL ist in `src/services/toolHandler.ts` konfiguriert.
 
----
+## 🐛 Bekannte Probleme & Lösungen
 
-**Hinweis**: Stelle sicher, dass du über einen gültigen Z.AI API-Schlüssel verfügst, bevor du den Client verwendest. Der Client ist für Windows optimiert und wurde mit Rust 1.88.0 getestet.
+### 1. Port-Konflikte
+**Problem**: Web-Search Service kann nicht auf Port 3003 starten
+**Lösung**: Port wurde auf 3004 geändert. Alle Konfigurationen wurden entsprechend aktualisiert.
+
+### 2. Electron Preload-Script Fehler
+**Problem**: "Cannot bind an API on top of an existing property"
+**Lösung**: Doppelte `contextBridge.exposeInMainWorld` Aufrufe in `electron/preload.js` wurden entfernt.
+
+### 3. API Timeout-Fehler
+**Problem**: AbortError bei API-Anfragen
+**Lösung**: Timeout wurde von 30 auf 60 Sekunden erhöht und bessere Fehlerbehandlung hinzugefügt.
+
+### 4. CSS-Syntax-Fehler
+**Problem**: Doppelte CSS-Regeln in `globals.css`
+**Lösung**: Doppelte Regeln wurden entfernt.
+
+## 🔍 Troubleshooting
+
+### API-Fehler
+1. Prüfe deinen API-Key in der `.env` Datei
+2. Stelle sicher, dass du eine stabile Internetverbindung hast
+3. Prüfe die API-Konfiguration in `src/config/api.ts`
+
+### Web-Search Service
+1. Stelle sicher, dass der Service auf Port 3004 läuft
+2. Prüfe die CORS-Konfiguration in `web-search-service/server.js`
+3. Starte den Service neu: `cd web-search-service && npm start`
+
+### Electron-Probleme
+1. Prüfe die Preload-Script-Konfiguration in `electron/main.js`
+2. Stelle sicher, dass alle Electron-Dependencies installiert sind
+3. Starte die Electron-App neu: `pnpm electron:dev`
+
+## 📁 Projektstruktur
+
+```
+chatglm-web/
+├── src/
+│   ├── components/          # React-Komponenten
+│   ├── hooks/              # Custom React Hooks
+│   ├── services/           # API-Services
+│   ├── config/             # Konfigurationsdateien
+│   ├── types/              # TypeScript-Typen
+│   └── styles/             # CSS-Styles
+├── electron/               # Electron-spezifische Dateien
+├── web-search-service/     # Web-Search Service
+├── dist-electron/          # Electron Build-Output
+└── static/                 # Statische Assets
+```
+
+## 🤝 Beitragen
+
+1. Fork das Repository
+2. Erstelle einen Feature-Branch
+3. Committe deine Änderungen
+4. Push zum Branch
+5. Erstelle einen Pull Request
+
+## 📄 Lizenz
+
+Dieses Projekt ist unter der MIT-Lizenz lizenziert.

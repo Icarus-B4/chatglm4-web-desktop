@@ -25,7 +25,7 @@ interface CodeGenerationResult {
   error?: string;
 }
 
-export async function generateCodeWithClaude(prompt: string): Promise<CodeGenerationResult> {
+export async function generateCodeWithClaude(prompt: string, conversationHistory: any[] = []): Promise<CodeGenerationResult> {
   try {
     console.log('Starte Code-Generierung mit Z.AI API...');
 
@@ -35,6 +35,7 @@ export async function generateCodeWithClaude(prompt: string): Promise<CodeGenera
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${API_CONFIG.API_KEY}`,
       },
+      signal: AbortSignal.timeout(API_CONFIG.TIMEOUT), // Timeout hinzufügen
       body: JSON.stringify({
         model: API_CONFIG.MODEL,
         messages: [
@@ -57,10 +58,27 @@ BESONDERS WICHTIG für Webseiten:
 - Einfache Landing Pages → EINE HTML-Datei mit inline CSS/JS
 - Nur bei expliziter Anfrage nach React/Next.js/Vue → separate Dateien
 
+KONVERSATIONS-MEMORY:
+- Du hast Zugriff auf den kompletten Chat-Verlauf
+- Bei Änderungen an bestehendem Code: Verwende die vorherigen Artefakte als Basis
+- Bei "ändere", "modifiziere", "verbessere" - beziehe dich auf den letzten generierten Code
+
 Verwende das create_code_artifact Tool für jede Datei. Erstelle immer vollständige, funktionsfähige Dateien.
 
-WICHTIG: Nutze NUR das create_code_artifact Tool - andere Tools können ignoriert werden.`
+WEB-SEARCH FUNKTIONALITÄT:
+- Du hast Zugriff auf das web_search Tool für aktuelle Informationen
+- Nutze es für: Neueste Framework-Versionen, aktuelle Best Practices, spezifische Code-Beispiele
+- Beispiele: "React 18 neue Features", "Tailwind CSS 2024 updates", "Vue 3 Composition API Beispiele"
+
+VERFÜGBARE TOOLS:
+- create_code_artifact: Für das Erstellen von Code-Dateien
+- web_search: Für aktuelle Informationen und Dokumentation`
           },
+          // Füge die gesamte Konversationshistorie hinzu
+          ...conversationHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          })),
           {
             role: 'user',
             content: prompt,
@@ -96,6 +114,23 @@ WICHTIG: Nutze NUR das create_code_artifact Tool - andere Tools können ignorier
                   }
                 },
                 required: ["filename", "language", "content"]
+              }
+            }
+          },
+          {
+            type: "function",
+            function: {
+              name: "web_search",
+              description: "Führt eine Web-Suche über DuckDuckGo durch, um aktuelle Informationen, Dokumentation oder Code-Beispiele zu finden. Nutze das für aktuelle Technologie-Trends, Framework-Updates, spezifische Bibliotheken oder wenn du zusätzliche Informationen benötigst.",
+              parameters: {
+                type: "object",
+                properties: {
+                  query: {
+                    type: "string",
+                    description: "Die Suchanfrage in natürlicher Sprache oder mit spezifischen Keywords (z.B. 'React 18 new features', 'Tailwind CSS grid examples', 'Vue 3 composition API tutorial')"
+                  }
+                },
+                required: ["query"]
               }
             }
           }

@@ -19,7 +19,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
     icon: path.join(__dirname, 'assets', 'icon.png'),
-    titleBarStyle: 'hidden',
+    titleBarStyle: 'default',
     frame: false,
     transparent: true,
     backgroundColor: '#00000020', // Leicht sichtbarer Hintergrund
