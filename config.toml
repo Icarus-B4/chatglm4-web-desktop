@@ -1,0 +1,34 @@
+[server]
+host = "127.0.0.1"
+port = 3001
+timeout = 30
+
+[chatglm]
+api_url = "https://api.z.ai/v1"
+api_key = ""  # Wird aus Umgebungsvariablen geladen
+model = "glm-4.5"
+max_tokens = 4096
+temperature = 0.7
+top_p = 0.9
+stream = false
+
+[cors]
+allowed_origins = ["http://localhost:3001", "http://127.0.0.1:3001"]
+allowed_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+allowed_headers = ["Content-Type", "Authorization"]
+
+[logging]
+level = "info"
+format = "json"
+
+[static_files]
+path = "./static"
+max_age = 3600
+
+[session]
+secret = "your-session-secret-here"
+timeout = 3600
+
+[websocket]
+max_connections = 100
+heartbeat_interval = 30

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  chatglm-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatglm-web
+    ports:
+      - "3000:3000"
+    environment:
+      - GLM_API_KEY=${GLM_API_KEY}
+      - GLM_API_URL=${GLM_API_URL:-https://api.z.ai/v1}
+      - GLM_MODEL=${GLM_MODEL:-glm-4.5}
+      - GLM_MAX_TOKENS=${GLM_MAX_TOKENS:-4096}
+      - GLM_TEMPERATURE=${GLM_TEMPERATURE:-0.7}
+      - GLM_TOP_P=${GLM_TOP_P:-0.9}
+      - GLM_STREAM=${GLM_STREAM:-false}
+      - GLM_THINKING_ENABLED=${GLM_THINKING_ENABLED:-true}
+      - SERVER_HOST=${SERVER_HOST:-0.0.0.0}
+      - SERVER_PORT=${SERVER_PORT:-3000}
+      - RUST_LOG=${RUST_LOG:-info}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - chatglm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Nginx Reverse Proxy für Produktion
+  nginx:
+    image: nginx:alpine
+    container_name: chatglm-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - chatglm-web
+    networks:
+      - chatglm-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+networks:
+  chatglm-network:
+    driver: bridge

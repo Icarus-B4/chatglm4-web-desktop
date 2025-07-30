@@ -1,0 +1,71 @@
+# Git
+.git
+.gitignore
+
+# Build Artifacts
+target/
+dist/
+node_modules/
+static/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage/
+.nyc_output
+__tests__/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development tools
+.eslintrc*
+.prettierrc*
+tsconfig.json
+vite.config.ts
+vitest.config.ts
+tailwind.config.js
+postcss.config.js
+
+# Build scripts
+build.sh
+build.ps1
+Makefile
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Package manager lockfiles (werden in Dockerfile extra kopiert)
+package-lock.json
+yarn.lock
+Cargo.lock
