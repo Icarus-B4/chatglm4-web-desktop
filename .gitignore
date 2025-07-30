@@ -36,6 +36,14 @@ build/
 static/js/
 static/css/
 
+# Electron builds (too large for GitHub)
+dist-electron/
+*.exe
+*.dmg
+*.deb
+*.rpm
+*.AppImage
+
 # IDE
 .vscode/
 .idea/
